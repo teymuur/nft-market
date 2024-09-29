@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mint NFT</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-top: 50px;
+        }
+
+        p {
+            color: #666;
+            margin-top: 20px;
+        }
+
+        form {
+            width: 500px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        label {
+            display: block;
+            margin-top: 20px;
+            color: #333;
+        }
+
+        input,
+        textarea,
+        button {
+            width: 100%;
+            padding: 10px;
+            border-radius: 5px;
+            border: 5px;
+            font-size: 16px;
+            color: #333;
+        }
+
+        input[type="number"] {
+            text-align: right;
+        }
+
+        button {
+            background-color: #007bff;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.5.2/dist/web3.min.js"></script>
+    <script>
+        let web3;
+        let contract;
+        let account;
+
+        const contractAddress = "YOUR_CONTRACT_ADDRESS_HERE"; // Update this after deployment
+        const contractABI = []; // Paste your contract ABI here
+
+        async function init() {
+            if (typeof window.ethereum !== 'undefined') {
+                try {
+                    await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    web3 = new Web3(window.ethereum);
+
+                    const accounts = await web3.eth.getAccounts();
+                    account = accounts[0];
+                    document.getElementById('account').textContent = account;
+
+                    contract = new web3.eth.Contract(contractABI, contractAddress);
+                } catch (error) {
+                    console.error("Error initializing Web3", error);
+                }
+            } else {
+                console.log('Please install MetaMask!');
+            }
+        }
+
+        async function mintNFT() {
+            const name = document.getElementById('nftName').value;
+            const description = document.getElementById('nftDescription').value;
+            const imageUrl = document.getElementById('nftImageUrl').value;
+            const price = document.getElementById('nftPrice').value;
+
+            if (!name || !description || !imageUrl || !price) {
+                alert("Please fill in all fields");
+                return;
+            }
+
+            const metadata = {
+                name: name,
+                description: description,
+                image: imageUrl
+            };
+
+            try {
+                // In a real-world scenario, you would upload this metadata to IPFS
+                // and use the resulting hash as the tokenURI.
+                // For this example, we'll use a placeholder URI
+                const tokenURI = `https://example.com/metadata/${Date.now()}.json`;
+
+                const priceWei = web3.utils.toWei(price, 'ether');
+                
+                // This assumes your contract has a `createToken` function
+                // that takes a tokenURI and a price
+                await contract.methods.createToken(tokenURI, priceWei).send({ from: account });
+                
+                alert("NFT minted successfully!");
+                clearForm();
+            } catch (error) {
+                console.error("Error minting NFT", error);
+                alert("Error minting NFT. See console for details.");
+            }
+        }
+
+        function clearForm() {
+            document.getElementById('nftName').value = '';
+            document.getElementById('nftDescription').value = '';
+            document.getElementById('nftImageUrl').value = '';
+            document.getElementById('nftPrice').value = '';
+        }
+
+        window.addEventListener('load', init);
+    </script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <h1>TYMBB NFT</h1>
+        <ul class="nav-links">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="#">Explore</a></li>
+            <li><a href="create.html">Create</a></li>
+            <li class="profile-link">
+                <a href="#">Profile</a>
+                <div class="account-info">Account: <span id="account"></span></div>
+            </li>
+        </ul>
+    </nav>
+    <h1>Mint Your NFT</h1>
+    <p>Connected Account: <span id="account"></span></p>
+
+    <form id="mintForm">
+        <label for="nftName">NFT Name:</label>
+        <input type="text" id="nftName" required><br><br>
+
+        <label for="nftDescription">Description:</label>
+        <textarea id="nftDescription" required></textarea><br><br>
+
+        <label for="nftImageUrl">Image URL:</label>
+        <input type="url" id="nftImageUrl" required><br><br>
+
+        <label for="nftPrice">Price (in ETH):</label>
+        <input type="number" id="nftPrice" step="0.01" required><br><br>
+
+        <button type="button" onclick="mintNFT()">Mint NFT</button>
+    </form>
+</body>
+</html>
